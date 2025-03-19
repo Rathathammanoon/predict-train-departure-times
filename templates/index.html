@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบทำนายการล่าช้าของรถไฟ</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #1E88E5;
+            --secondary-color: #FFC107;
+            --background-color: #F5F7FA;
+            --card-color: #FFFFFF;
+            --text-color: #333333;
+            --border-color: #E0E0E0;
+            --success-color: #4CAF50;
+            --warning-color: #FF9800;
+            --error-color: #F44336;
+            --info-color: #2196F3;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Tahoma', sans-serif;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 250px;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 20px;
+        }
+
+        .sidebar h2 {
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .menu {
+            list-style: none;
+        }
+
+        .menu li {
+            margin-bottom: 10px;
+        }
+
+        .menu-item {
+            display: block;
+            padding: 10px;
+            border-radius: 5px;
+            text-decoration: none;
+            color: white;
+            transition: background-color 0.3s;
+        }
+
+        .menu-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .menu-item.active {
+            background-color: rgba(255, 255, 255, 0.2);
+            font-weight: bold;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 20px;
+        }
+
+        .page-title {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .page-title h1 {
+            font-size: 2rem;
+            margin-left: 10px;
+        }
+
+        .divider {
+            height: 1px;
+            background-color: var(--border-color);
+            margin: 20px 0;
+        }
+
+        .card {
+            background-color: var(--card-color);
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card-header {
+            margin-bottom: 15px;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+
+        .btn:hover {
+            background-color: #1976D2;
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: #FFA000;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .alert {
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+
+        .alert-success {
+            background-color: rgba(76, 175, 80, 0.1);
+            border-left: 4px solid var(--success-color);
+            color: var(--success-color);
+        }
+
+        .alert-warning {
+            background-color: rgba(255, 152, 0, 0.1);
+            border-left: 4px solid var(--warning-color);
+            color: var(--warning-color);
+        }
+
+        .alert-error {
+            background-color: rgba(244, 67, 54, 0.1);
+            border-left: 4px solid var(--error-color);
+            color: var(--error-color);
+        }
+
+        .alert-info {
+            background-color: rgba(33, 150, 243, 0.1);
+            border-left: 4px solid var(--info-color);
+            color: var(--info-color);
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        .result-container {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            background-color: var(--card-color);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-container {
+            width: 100%;
+            height: 300px;
+            margin-top: 20px;
+        }
+
+        .upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+        .upload-area:hover {
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: #f5f5f5;
+        }
+
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        .mt-4 {
+            margin-top: 20px;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .dataframe {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .feature-importance {
+            margin-top: 20px;
+        }
+
+        .about-image {
+            width: 100%;
+            max-width: 800px;
+            margin: 20px auto;
+            display: block;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <h2>เมนูหลัก</h2>
+            <ul class="menu">
+                <li><a href="#" class="menu-item active" data-page="train-model">🧠 ฝึกโมเดล</a></li>
+                <li><a href="#" class="menu-item" data-page="predict">🔍 ทำนายการล่าช้า</a></li>
+                <li><a href="#" class="menu-item" data-page="about">ℹ️ เกี่ยวกับระบบ</a></li>
+            </ul>
+        </div>
+
+        <div class="main-content">
+            <div class="page-title">
+                <h1>🚂 ระบบทำนายการล่าช้าของรถไฟ</h1>
+            </div>
+            <div class="divider"></div>
+
+            <!-- หน้าฝึกโมเดล -->
+            <div class="page active" id="train-model">
+                <h2>🧠 ฝึกโมเดลทำนายการล่าช้าของรถไฟ</h2>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">อัปโหลดไฟล์ Excel (.xlsx)</div>
+                    </div>
+                    <div class="upload-area" id="upload-area">
+                        <input type="file" id="file-upload" class="file-input" accept=".xlsx">
+                        <p>คลิกที่นี่เพื่ออัปโหลดไฟล์ หรือลากและวางไฟล์</p>
+                    </div>
+                    <div id="file-info" class="alert alert-info" style="display: none;"></div>
+                </div>
+
+                <div id="data-preview" class="card" style="display: none;">
+                    <div class="card-header">
+                        <div class="card-title">ข้อมูลตัวอย่าง</div>
+                    </div>
+                    <div class="dataframe">
+                        <table id="data-table">
+                            <thead>
+                                <tr></tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="features-selection" class="card" style="display: none;">
+                    <div class="card-header">
+                        <div class="card-title">เลือก Features และ Target</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="features">เลือก Features</label>
+                        <select id="features" multiple style="height: 200px;">
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="target">เลือก Target (ค่าที่ต้องการทำนาย)</label>
+                        <select id="target">
+                        </select>
+                    </div>
+                    <button id="train-btn" class="btn">เริ่มฝึกโมเดล</button>
+                </div>
+
+                <div id="model-result" class="card" style="display: none;">
+                    <div class="card-header">
+                        <div class="card-title">ความสำคัญของ Features</div>
+                    </div>
+                    <div class="feature-importance">
+                        <canvas id="feature-chart"></canvas>
+                    </div>
+                    <div class="mt-4">
+                        <button id="download-model" class="btn">⬇️ ดาวน์โหลดโมเดล</button>
+                        <button id="download-encoders" class="btn btn-secondary">⬇️ ดาวน์โหลด Label Encoders</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- หน้าทำนายการล่าช้า -->
+            <div class="page" id="predict">
+                <h2>🔍 ทำนายการล่าช้าของรถไฟ</h2>
+
+                <div id="model-upload" class="card">
+                    <div class="card-header">
+                        <div class="card-title">อัปโหลดโมเดล</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="model-file">อัปโหลดไฟล์โมเดล (.pkl)</label>
+                        <input type="file" id="model-file" accept=".pkl">
+                    </div>
+                    <div class="form-group">
+                        <label for="encoders-file">อัปโหลดไฟล์ Label Encoders (.pkl)</label>
+                        <input type="file" id="encoders-file" accept=".pkl">
+                    </div>
+                    <button id="upload-model-btn" class="btn">อัปโหลดไฟล์</button>
+                </div>
+
+                <div id="prediction-form" class="card" style="display: none;">
+                    <div class="card-header">
+                        <div class="card-title">กรอกข้อมูลเพื่อทำนาย</div>
+                    </div>
+                    <div class="grid">
+                        <div>
+                            <div class="form-group">
+                                <label for="train-type">ประเภทรถไฟ</label>
+                                <select id="train-type">
+                                    <option value="รถด่วนพิเศษ">รถด่วนพิเศษ</option>
+                                    <option value="รถด่วน">รถด่วน</option>
+                                    <option value="รถเร็ว">รถเร็ว</option>
+                                    <option value="รถธรรมดา">รถธรรมดา</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="max-speed">ความเร็วสูงสุดของรถไฟ (กม./ชม.)</label>
+                                <input type="number" id="max-speed" min="0" max="200" value="120">
+                            </div>
+                            <div class="form-group">
+                                <label for="num-junctions">จำนวนทางแยก</label>
+                                <input type="number" id="num-junctions" min="0" max="20" value="5">
+                            </div>
+                            <div class="form-group">
+                                <label for="trip-type">ขาเดินทาง</label>
+                                <select id="trip-type">
+                                    <option value="ขาไป">ขาไป</option>
+                                    <option value="ขากลับ">ขากลับ</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="train-number">หมายเลขขบวนรถไฟ</label>
+                                <input type="number" id="train-number" min="1" max="1000" value="100">
+                            </div>
+                        </div>
+                        <div>
+                            <div class="form-group">
+                                <label for="travel-date">วันที่เดินทาง</label>
+                                <input type="date" id="travel-date">
+                            </div>
+                            <div class="form-group">
+                                <label for="departure-time">เวลาออกเดินทางตามกำหนด</label>
+                                <input type="time" id="departure-time">
+                            </div>
+                            <div class="form-group">
+                                <label for="arrival-time">เวลาถึงจุดหมายตามกำหนด</label>
+                                <input type="time" id="arrival-time">
+                            </div>
+                            <div class="form-group">
+                                <label for="railway-line">เส้นทางรถไฟ</label>
+                                <select id="railway-line">
+                                    <option value="สายเหนือ">สายเหนือ</option>
+                                    <option value="สายตะวันออกเฉียงเหนือ">สายตะวันออกเฉียงเหนือ</option>
+                                    <option value="สายตะวันออก">สายตะวันออก</option>
+                                    <option value="สายใต้">สายใต้</option>
+                                    <option value="สายตะวันตก">สายตะวันตก</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="distance">ระยะทาง (กม.)</label>
+                                <input type="number" id="distance" min="0" max="1000" value="200">
+                            </div>
+                            <div class="form-group">
+                                <label for="num-stations">จำนวนสถานีที่ผ่าน</label>
+                                <input type="number" id="num-stations" min="0" max="50" value="10">
+                            </div>
+                            <div class="form-group">
+                                <label for="time-period">ช่วงเวลา</label>
+                                <select id="time-period">
+                                    <option value="เช้า">เช้า</option>
+                                    <option value="กลางวัน">กลางวัน</option>
+                                    <option value="เย็น">เย็น</option>
+                                    <option value="กลางคืน">กลางคืน</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <button id="predict-btn" class="btn">ทำนายการล่าช้า</button>
+                </div>
+
+                <div id="prediction-result" class="result-container" style="display: none;">
+                    <h3 id="prediction-value" class="text-center"></h3>
+                    <div id="prediction-interpretation" class="alert" style="margin-top: 20px;"></div>
+                    <div class="chart-container">
+                        <canvas id="result-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- หน้าเกี่ยวกับระบบ -->
+            <div class="page" id="about">
+                <h2>ℹ️ เกี่ยวกับระบบทำนายการล่าช้าของรถไฟ</h2>
+
+                <div class="card">
+                    <h3>วัตถุประสงค์</h3>
+                    <p>ระบบนี้พัฒนาขึ้นเพื่อช่วยทำนายการล่าช้าของรถไฟในประเทศไทย โดยใช้เทคนิค Machine Learning ประเภท Random Forest</p>
+                </div>
+
+                <div class="card">
+                    <h3>วิธีการใช้งาน</h3>
+                    <ol>
+                        <li><strong>ฝึกโมเดล</strong>: อัปโหลดไฟล์ Excel ที่มีข้อมูลการเดินรถไฟ เลือก Features และ Target แล้วกดปุ่ม "เริ่มฝึกโมเดล"</li>
+                        <li><strong>ทำนายการล่าช้า</strong>: กรอกข้อมูลของรถไฟที่ต้องการทำนาย แล้วกดปุ่ม "ทำนายการล่าช้า"</li>
+                    </ol>
+                </div>
+
+                <div class="card">
+                    <h3>ข้อมูลที่ใช้ในการทำนาย</h3>
+                    <ul>
+                        <li>ประเภทรถไฟ</li>
+                        <li>ความเร็วสูงสุดของรถไฟ</li>
+                        <li>จำนวนทางแยก</li>
+                        <li>ขาเดินทาง (ไป/กลับ)</li>
+                        <li>หมายเลขขบวนรถไฟ</li>
+                        <li>วันที่เดินทาง</li>
+                        <li>เวลาออกเดินทางตามกำหนด</li>
+                        <li>เวลาถึงจุดหมายตามกำหนด</li>
+                        <li>เส้นทางรถไฟ</li>
+                        <li>ระยะทาง</li>
+                        <li>จำนวนสถานีที่ผ่าน</li>
+                        <li>ช่วงเวลา</li>
+</ul>
+</div>            <div class="card">
+                <h3>เทคโนโลยีที่ใช้</h3>
+                <ul>
+                    <li><strong>Frontend</strong>: HTML, CSS, JavaScript (Chart.js)</li>
+                    <li><strong>Backend</strong>: Python (Flask, Pandas, Scikit-learn)</li>
+                    <li><strong>Machine Learning</strong>: Random Forest Regressor</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h3>ขั้นตอนการทำงาน</h3>
+                <ol>
+                    <li><strong>อัปโหลดข้อมูล</strong>: ผู้ใช้สามารถอัปโหลดไฟล์ Excel ที่มีข้อมูลการเดินรถไฟเพื่อฝึกโมเดล</li>
+                    <li><strong>เลือก Features และ Target</strong>: ผู้ใช้เลือกคอลัมน์ที่ต้องการใช้เป็น Features และ Target สำหรับการฝึกโมเดล</li>
+                    <li><strong>ฝึกโมเดล</strong>: ระบบจะทำการฝึกโมเดลด้วยอัลกอริทึม Random Forest และแสดงผลความสำคัญของ Features</li>
+                    <li><strong>ทำนายการล่าช้า</strong>: ผู้ใช้สามารถกรอกข้อมูลเพื่อทำนายการล่าช้าของรถไฟ และระบบจะแสดงผลการทำนายพร้อมกราฟ</li>
+                </ol>
+            </div>
+
+            <div class="card">
+                <h3>ข้อจำกัดของระบบ</h3>
+                <ul>
+                    <li>ระบบนี้ใช้สำหรับการทำนายการล่าช้าของรถไฟในประเทศไทยเท่านั้น</li>
+                    <li>ความแม่นยำของการทำนายขึ้นอยู่กับคุณภาพและปริมาณของข้อมูลที่ใช้ฝึกโมเดล</li>
+                    <li>ระบบอาจไม่สามารถทำนายการล่าช้าได้อย่างแม่นยำหากมีปัจจัยภายนอกที่ไม่ได้รวมอยู่ในข้อมูล เช่น สภาพอากาศ หรืออุบัติเหตุ</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h3>ติดต่อเรา</h3>
+                <p>หากมีคำถามหรือข้อเสนอแนะเกี่ยวกับระบบ กรุณาติดต่อเราที่ <a href="mailto:support@trainpredict.com">support@trainpredict.com</a></p>
+            </div>
+
+            <div class="card">
+                <h3>เกี่ยวกับผู้พัฒนา</h3>
+                <p>ระบบนี้พัฒนาขึ้นโดยทีมนักพัฒนาที่มีความสนใจในการใช้เทคโนโลยีเพื่อแก้ไขปัญหาด้านการขนส่งสาธารณะ</p>
+            </div>
+
+            <img src="about-image.jpg" alt="เกี่ยวกับระบบ" class="about-image">
+        </div>
+    </div>
+</div>
+
+<script>
+    // JavaScript สำหรับการเปลี่ยนหน้า
+    const menuItems = document.querySelectorAll('.menu-item');
+    const pages = document.querySelectorAll('.page');
+
+    menuItems.forEach(item => {
+        item.addEventListener('click', function() {
+            // ลบคลาส active จากเมนูทั้งหมด
+            menuItems.forEach(i => i.classList.remove('active'));
+            // เพิ่มคลาส active ให้กับเมนูที่ถูกคลิก
+            this.classList.add('active');
+
+            // ซ่อนหน้าทั้งหมด
+            pages.forEach(page => page.classList.remove('active'));
+            // แสดงหน้าที่ตรงกับเมนูที่ถูกคลิก
+            const targetPage = document.getElementById(this.getAttribute('data-page'));
+            targetPage.classList.add('active');
+        });
+    });
+
+    // JavaScript สำหรับการอัปโหลดไฟล์ Excel
+    const uploadArea = document.getElementById('upload-area');
+    const fileInput = document.getElementById('file-upload');
+    const fileInfo = document.getElementById('file-info');
+    const dataPreview = document.getElementById('data-preview');
+    const featuresSelection = document.getElementById('features-selection');
+    const modelResult = document.getElementById('model-result');
+
+    uploadArea.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', function() {
+        const file = this.files[0];
+        if (file) {
+            fileInfo.textContent = `ไฟล์ที่เลือก: ${file.name}`;
+            fileInfo.style.display = 'block';
+
+            // อ่านไฟล์ Excel และแสดงข้อมูลตัวอย่าง
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+                // แสดงข้อมูลตัวอย่างในตาราง
+                const table = document.getElementById('data-table');
+                const thead = table.querySelector('thead tr');
+                const tbody = table.querySelector('tbody');
+
+                // ล้างข้อมูลเดิม
+                thead.innerHTML = '';
+                tbody.innerHTML = '';
+
+                // เพิ่มหัวตาราง
+                jsonData[0].forEach(header => {
+                    const th = document.createElement('th');
+                    th.textContent = header;
+                    thead.appendChild(th);
+                });
+
+                // เพิ่มข้อมูลตัวอย่าง (แถวที่ 2-6)
+                for (let i = 1; i <= 5 && i < jsonData.length; i++) {
+                    const row = document.createElement('tr');
+                    jsonData[i].forEach(cell => {
+                        const td = document.createElement('td');
+                        td.textContent = cell;
+                        row.appendChild(td);
+                    });
+                    tbody.appendChild(row);
+                }
+
+                // แสดงตารางข้อมูลตัวอย่าง
+                dataPreview.style.display = 'block';
+
+                // เตรียมข้อมูลสำหรับเลือก Features และ Target
+                const featuresSelect = document.getElementById('features');
+                const targetSelect = document.getElementById('target');
+
+                // ล้างข้อมูลเดิม
+                featuresSelect.innerHTML = '';
+                targetSelect.innerHTML = '';
+
+                // เพิ่ม Features และ Target
+                jsonData[0].forEach(header => {
+                    const optionFeature = document.createElement('option');
+                    optionFeature.value = header;
+                    optionFeature.textContent = header;
+                    featuresSelect.appendChild(optionFeature);
+
+                    const optionTarget = document.createElement('option');
+                    optionTarget.value = header;
+                    optionTarget.textContent = header;
+                    targetSelect.appendChild(optionTarget);
+                });
+
+                // แสดงส่วนเลือก Features และ Target
+                featuresSelection.style.display = 'block';
+            };
+            reader.readAsArrayBuffer(file);
+        }
+    });
+
+    // JavaScript สำหรับการฝึกโมเดล
+    const trainBtn = document.getElementById('train-btn');
+    const featureChart = document.getElementById('feature-chart');
+
+    trainBtn.addEventListener('click', function() {
+        // สมมติว่ามีการฝึกโมเดลและได้ผลลัพธ์
+        const featureImportance = {
+            labels: ['Feature 1', 'Feature 2', 'Feature 3', 'Feature 4'],
+            datasets: [{
+                label: 'ความสำคัญของ Features',
+                data: [0.5, 0.3, 0.1, 0.1],
+                backgroundColor: ['#1E88E5', '#FFC107', '#4CAF50', '#F44336']
+            }]
+        };
+
+        // แสดงกราฟความสำคัญของ Features
+        new Chart(featureChart, {
+            type: 'bar',
+            data: featureImportance,
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+
+        // แสดงผลลัพธ์การฝึกโมเดล
+        modelResult.style.display = 'block';
+    });
+
+    // JavaScript สำหรับการทำนายการล่าช้า
+    const predictBtn = document.getElementById('predict-btn');
+    const predictionResult = document.getElementById('prediction-result');
+    const predictionValue = document.getElementById('prediction-value');
+    const predictionInterpretation = document.getElementById('prediction-interpretation');
+    const resultChart = document.getElementById('result-chart');
+
+    predictBtn.addEventListener('click', function() {
+        // สมมติว่ามีการทำนายและได้ผลลัพธ์
+        const delayMinutes = Math.floor(Math.random() * 120); // สุ่มค่าการล่าช้า
+        predictionValue.textContent = `ผลการทำนาย: รถไฟจะล่าช้า ${delayMinutes} นาที`;
+
+        // แสดงผลการตีความ
+        if (delayMinutes < 30) {
+            predictionInterpretation.className = 'alert alert-success';
+            predictionInterpretation.textContent = 'การล่าช้าไม่รุนแรง สามารถเดินทางได้ตามปกติ';
+        } else if (delayMinutes < 60) {
+            predictionInterpretation.className = 'alert alert-warning';
+            predictionInterpretation.textContent = 'การล่าช้าระดับปานกลาง โปรดตรวจสอบเวลาก่อนเดินทาง';
+        } else {
+            predictionInterpretation.className = 'alert alert-error';
+            predictionInterpretation.textContent = 'การล่าช้ารุนแรง โปรดพิจารณาเปลี่ยนแผนการเดินทาง';
+        }
+
+        // แสดงกราฟผลการทำนาย
+        new Chart(resultChart, {
+            type: 'doughnut',
+            data: {
+                labels: ['ล่าช้า', 'ไม่ล่าช้า'],
+                datasets: [{
+                    label: 'ผลการทำนาย',
+                    data: [delayMinutes, 120 - delayMinutes],
+                    backgroundColor: ['#F44336', '#4CAF50']
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    }
+                }
+            }
+        });
+
+        // แสดงผลลัพธ์การทำนาย
+        predictionResult.style.display = 'block';
+    });
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
