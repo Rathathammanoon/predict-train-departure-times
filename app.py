@@ -287,7 +287,7 @@ def main():
                         min_value=0, max_value=50, value=10
                     )
 
-                    time_periods = [1, 2,]
+                    time_periods = [1, 2]
                     time_period = st.selectbox("ช่วงเวลา", time_periods)
 
                 if st.button("ทำนายการล่าช้า"):
