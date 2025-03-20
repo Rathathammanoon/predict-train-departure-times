@@ -264,10 +264,12 @@ def main():
                     outbound_return = outbound_return_dict[outbound_return_display]
 
                     # หมายเลขขบวนรถไฟ
-                    train_number = st.number_input(
-                        "หมายเลขขบวนรถไฟ",
-                        min_value=7, max_value=4500, value=7
-                    )
+                    train_number_list = {
+                        "7": 7,
+                        "8": 8
+                    }
+                    train_number_display = st.selectbox("หมายเลขขบวนรถไฟ", list(train_number_list.keys()))
+                    train_number = train_number_list[train_number_display]
 
                 # Column ขวา
                 with col2:
