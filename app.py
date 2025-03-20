@@ -11,10 +11,8 @@ import warnings
 
 warnings.filterwarnings('ignore')
 
-# กำหนดให้ใช้ฟอนต์ Tahoma
 plt.rcParams['font.family'] = 'Tahoma'
 
-# ฟังก์ชันในการโหลดและเตรียมข้อมูล
 def load_and_preprocess_data(file_path):
     try:
         xls = pd.ExcelFile(file_path)
@@ -22,23 +20,20 @@ def load_and_preprocess_data(file_path):
         df = pd.read_excel(xls, 'report', engine='openpyxl')
         st.success(f"✅ โหลดข้อมูลสำเร็จ: {df.shape[0]} แถว และ {df.shape[1]} คอลัมน์")
 
-        # แปลงคอลัมน์เวลาให้อยู่ในรูปแบบที่เหมาะสม
         time_columns = ['Scheduled_departure_time_origin', 'Scheduled_arrival_time_destination',
                         'Actual_departure_time_origin', 'Actual_arrival_time_destination']
         for col in time_columns:
             if col in df.columns:
-                if df[col].dtype == 'object':  # ถ้าเป็นสตริง
+                if df[col].dtype == 'object':
                     try:
                         df[col] = pd.to_datetime(df[col], errors='coerce')
                     except:
                         st.warning(f"⚠️ ไม่สามารถแปลงคอลัมน์ {col} เป็นรูปแบบเวลาได้")
-
         return df
     except Exception as e:
         st.error(f"❌ เกิดข้อผิดพลาดในการโหลดข้อมูล: {e}")
         return None
 
-# ฟังก์ชันในการเตรียม features
 def preprocess_features(df, features):
     X = df[features].copy()
     categorical_cols = X.select_dtypes(include=['object', 'category']).columns
@@ -57,7 +52,6 @@ def preprocess_features(df, features):
 
     return X, label_encoders
 
-# ฟังก์ชันในการฝึกโมเดล
 def train_model(df, features, target):
     st.info("🚂 กำลังเตรียมโมเดล Random Forest...")
 
@@ -82,7 +76,6 @@ def train_model(df, features, target):
 
     return model, label_encoders, X.columns
 
-# ฟังก์ชันในการทำนายข้อมูลใหม่
 def predict_single_input(model, label_encoders, input_features, feature_columns):
     input_df = pd.DataFrame([input_features])
 
@@ -107,7 +100,6 @@ def predict_single_input(model, label_encoders, input_features, feature_columns)
                 st.warning(f"⚠️ ค่า {input_df[col][0]} ในคอลัมน์ {col} ไม่อยู่ในชุดข้อมูลฝึก จะใช้ค่าเริ่มต้นแทน")
                 input_df[col] = 0
 
-    # ตรวจสอบว่าเป็น datetime หรือไม่ก่อนแปลง
     datetime_cols = input_df.select_dtypes(include=['datetime64']).columns
     for col in datetime_cols:
         input_df[f"{col}_hour"] = input_df[col].dt.hour
@@ -125,7 +117,6 @@ def predict_single_input(model, label_encoders, input_features, feature_columns)
 
     return prediction
 
-# ฟังก์ชันหลักของแอปพลิเคชัน
 def main():
     st.set_page_config(page_title="ระบบทำนายการล่าช้าของรถไฟ", page_icon="🚂", layout="wide")
 
@@ -230,65 +221,98 @@ def main():
 
                 col1, col2 = st.columns(2)
 
+                # Column ซ้าย
                 with col1:
-                    train_types = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
-                    train_type = st.selectbox("ประเภทรถไฟ", train_types)
+                    # ประเภทของรถไฟ
+                    train_types_dict = {
+                        "รถด่วนพิเศษ": 1,
+                        "รถด่วน": 2,
+                        "รถเร็ว": 3,
+                        "รถธรรมดา": 4,
+                    }
+                    train_type_display = st.selectbox("ประเภทรถไฟ", list(train_types_dict.keys()))
+                    train_type = train_types_dict[train_type_display]
 
+                    # ความเร็วสูงสุด
                     max_speed = st.number_input(
                         "ความเร็วสูงสุดของรถไฟ (กม./ชม.)",
                         min_value=0, max_value=200, value=120
                     )
 
+                    # จำนวนทางแยก
                     num_junctions = st.number_input(
                         "จำนวนทางแยก",
                         min_value=0, max_value=20, value=5
                     )
 
-                    outbound_return = [1, 2]
-                    trip_type = st.selectbox("ขาเดินทาง", outbound_return)
+                    # ขาเดินทาง
+                    outbound_return_dict = {
+                        "ขาไป": 1,
+                        "ขากลับ": 2,
+                    }
+                    outbound_return_display = st.selectbox("ขาเดินทาง", list(outbound_return_dict.keys()))
+                    outbound_return = outbound_return_dict[outbound_return_display]
 
+                    # หมายเลขขบวนรถไฟ
                     train_number = st.number_input(
                         "หมายเลขขบวนรถไฟ",
-                        min_value=1, max_value=5000, value=500
+                        min_value=1, max_value=1000, value=100
                     )
 
+                # Column ขวา
                 with col2:
+                    # เวลาเดินทาง
                     travel_date = st.date_input(
                         "วันที่เดินทาง",
-                        datetime.now()
                     )
 
+                    # เวลาออกเดินทางตามกำหนด
                     departure_time = st.time_input(
                         "เวลาออกเดินทางตามกำหนด",
-                        datetime.now().time()
+
                     )
 
+                    if "arrival_time" not in st.session_state:
+                        st.session_state.arrival_time = (datetime.now() + timedelta(minutes=30)).time()
+
+                    # เวลาถึงจุดหมายตามกำหนด
                     arrival_time = st.time_input(
                         "เวลาถึงจุดหมายตามกำหนด",
-                        (datetime.now() + timedelta(hours=2)).time()
+                        value=st.session_state.arrival_time,
+                        key="arrival_time"
                     )
 
-                    # input_data = {
-                    #     "Date": travel_date,
-                    #     "Scheduled_departure_time_origin": datetime.combine(travel_date, departure_time),
-                    #     "Scheduled_arrival_time_destination": datetime.combine(travel_date, arrival_time),
-                    # }
+                    # สายเดินทาง
+                    railway_lines_dict = {
+                        "สายเหนือ": 1,
+                        "สายตะวันออกเฉียงเหนือ": 2,
+                        "สายตะวันออก": 3,
+                        "สายใต้": 4,
+                    }
+                    railway_type_display = st.selectbox("เส้นทางรถไฟ", list(railway_lines_dict.keys()))
+                    railway_line = railway_lines_dict[railway_type_display]
 
-                    railway_lines = [1, 2, 3, 4, 5]
-                    railway_line = st.selectbox("เส้นทางรถไฟ", railway_lines)
-
+                    # ระยะทาง
                     distance = st.number_input(
                         "ระยะทาง (กม.)",
                         min_value=0, max_value=1000, value=200
                     )
 
+                    # ผ่านทั้งหมดกี่สถานี
                     num_stations = st.number_input(
                         "จำนวนสถานีที่ผ่าน",
                         min_value=0, max_value=50, value=10
                     )
 
-                    time_periods = [1, 2]
-                    time_period = st.selectbox("ช่วงเวลา", time_periods)
+                    # ช่วงเวลา
+                    time_periods = {
+                        "เช้า": 1,
+                        "กลางวัน": 2,
+                        "เย็น": 3,
+                        "กลางคืน": 4,
+                    }
+                    time_period_display = st.selectbox("ช่วงเวลา", list(time_periods.keys()))
+                    time_period = time_periods[time_period_display]
 
                 if st.button("ทำนายการล่าช้า"):
                     departure_datetime = datetime.combine(travel_date, departure_time)
@@ -298,7 +322,7 @@ def main():
                         'Train_type': train_type,
                         'Maximum_train_speed': max_speed,
                         'Number_of_junctions': num_junctions,
-                        'Outbound_trips_Return_trips': trip_type,
+                        'Outbound_trips_Return_trips': outbound_return,
                         'Train_number': train_number,
                         'Date': travel_date,
                         'Scheduled_departure_time_origin': departure_datetime,
@@ -355,6 +379,5 @@ def main():
         # แสดงรูปภาพหรือแผนภาพประกอบ
         st.image("https://via.placeholder.com/800x400.png?text=Thai+Railway+System", caption="ระบบรถไฟไทย")
 
-# รันแอปพลิเคชัน
 if __name__ == "__main__":
     main()
