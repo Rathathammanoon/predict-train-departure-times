@@ -246,7 +246,7 @@ def main():
                     # ความเร็วสูงสุด
                     max_speed = st.number_input(
                         "ความเร็วสูงสุดของรถไฟ (กม./ชม.)",
-                        min_value=0, max_value=200, value=120
+                        min_value=60, max_value=160, value=120
                     )
 
                     # จำนวนทางแยก
@@ -266,7 +266,7 @@ def main():
                     # หมายเลขขบวนรถไฟ
                     train_number = st.number_input(
                         "หมายเลขขบวนรถไฟ",
-                        min_value=1, max_value=1000, value=100
+                        min_value=7, max_value=4500, value=7
                     )
 
                 # Column ขวา
