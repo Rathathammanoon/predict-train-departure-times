@@ -323,10 +323,8 @@ def main():
 
                     # ช่วงเวลา
                     time_periods = {
-                        "เช้า": 1,
-                        "กลางวัน": 2,
-                        "เย็น": 3,
-                        "กลางคืน": 4,
+                        "กลางวัน": 1,
+                        "กลางคืน": 2,
                     }
                     time_period_display = st.selectbox("ช่วงเวลา", list(time_periods.keys()))
                     time_period = time_periods[time_period_display]
