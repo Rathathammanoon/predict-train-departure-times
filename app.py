@@ -229,6 +229,16 @@ def main():
                         "รถด่วน": 2,
                         "รถเร็ว": 3,
                         "รถธรรมดา": 4,
+                        "ชานเมือง": 5,
+                        "ท้องถิ่น": 6,
+                        "พิเศษชานเมือง": 7,
+                        "พิเศษโดยสาร": 8,
+                        "นำเที่ยว": 9,
+                        "สินค้า": 0,
+                        "รถเปล่า": 11,
+                        "พิเศษนำเที่ยว": 12,
+                        "พิเศษ": 13,
+                        "พิเศษช่วยอันตราย": 14,
                     }
                     train_type_display = st.selectbox("ประเภทรถไฟ", list(train_types_dict.keys()))
                     train_type = train_types_dict[train_type_display]
@@ -288,6 +298,11 @@ def main():
                         "สายตะวันออกเฉียงเหนือ": 2,
                         "สายตะวันออก": 3,
                         "สายใต้": 4,
+                        "วงเวียนใหญ่ - มหาชัย": 5,
+                        "บ้านแหลม - แม่กลอง": 6,
+                        "เชื่อมต่อสายสีแดง": 7,
+                        "สายใต้ - สินค้า": 8,
+                        "ข้ามภูมิภาค": 9
                     }
                     railway_type_display = st.selectbox("เส้นทางรถไฟ", list(railway_lines_dict.keys()))
                     railway_line = railway_lines_dict[railway_type_display]
