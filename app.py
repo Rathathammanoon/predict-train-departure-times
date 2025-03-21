@@ -256,7 +256,7 @@ def main():
                     # จำนวนทางแยก
                     num_junctions = st.number_input(
                         "จำนวนทางแยก",
-                        min_value=0, max_value=20, value=5
+                        min_value=0, max_value=5, value=0
                     )
 
                     # ขาเดินทาง
@@ -560,13 +560,13 @@ def main():
                     # ระยะทาง
                     distance = st.number_input(
                         "ระยะทาง (กม.)",
-                        min_value=0, max_value=1000, value=200
+                        min_value=31, max_value=1152, value=31
                     )
 
                     # ผ่านทั้งหมดกี่สถานี
                     num_stations = st.number_input(
                         "จำนวนสถานีที่ผ่าน",
-                        min_value=0, max_value=50, value=10
+                        min_value=2, max_value=93, value=2
                     )
 
                     # ช่วงเวลา
