@@ -83,18 +83,30 @@ def train_model(df, features, target):
 def predict_single_input(model, label_encoders, input_features, feature_columns):
     input_df = pd.DataFrame([input_features])
 
-    if 'Date' in input_df.columns:
-        input_df['Date'] = pd.to_datetime(input_df['Date'])
+    if 'Day_Month_Year' in input_df.columns:
+        travel_date = input_df['Day_Month_Year'][0]
+
+        if 'Date' in feature_columns and 'Date' in input_df.columns:
+            pass
+        elif 'Date' in feature_columns and 'Date' not in input_df.columns:
+            input_df['Date'] = travel_date.isoweekday()
 
     time_columns = ['Scheduled_departure_time_origin', 'Scheduled_arrival_time_destination']
     for col in time_columns:
         if col in input_df.columns:
             if isinstance(input_df[col][0], str):
-                current_date = input_df["Date"][0] if "Date" in input_df.columns else datetime.now().date()
+                current_date = input_df["Day_Month_Year"][
+                    0] if "Day_Month_Year" in input_df.columns else datetime.now().date()
+                combined_datetime = datetime.combine(current_date,
+                                                     datetime.strptime(input_df[col][0], "%H:%M:%S").time())
+                input_df[col] = pd.to_datetime([combined_datetime])
+            elif isinstance(input_df[col][0], datetime):
+                pass
+            else:
+                current_date = input_df["Day_Month_Year"][
+                    0] if "Day_Month_Year" in input_df.columns else datetime.now().date()
                 combined_datetime = datetime.combine(current_date, input_df[col][0])
                 input_df[col] = pd.to_datetime([combined_datetime])
-            else:
-                input_df[col] = pd.to_datetime(input_df[col])
 
     for col, le in label_encoders.items():
         if col in input_df.columns:
@@ -111,14 +123,12 @@ def predict_single_input(model, label_encoders, input_features, feature_columns)
         input_df.drop(col, axis=1, inplace=True)
 
     missing_cols = set(feature_columns) - set(input_df.columns)
-
     for col in missing_cols:
         input_df[col] = 0
 
     input_df = input_df[feature_columns]
 
     prediction = model.predict(input_df)[0]
-
     return prediction
 
 
@@ -410,14 +420,19 @@ def main():
                     departure_datetime = datetime.combine(travel_date, departure_time)
                     arrival_datetime = datetime.combine(travel_date, arrival_time)
 
+                    # ตรวจสอบว่าจะวันข้ามวันหรือไม่
+                    if arrival_time < departure_time:
+                        # หากเวลามาถึงน้อยกว่าเวลาออก แสดงว่าน่าจะเป็นวันถัดไป
+                        arrival_datetime = datetime.combine(travel_date + timedelta(days=1), arrival_time)
+
                     input_data = {
                         'Train_type': train_type,
                         'Maximum_train_speed': max_speed,
                         'Number_of_junctions': num_junction,
                         'Outbound_trips_Return_trips': outbound_return,
                         'Train_number': train_number,
-                        'Date': day_of_week,
-                        'Day_Month_Year': travel_date,
+                        'Date': day_of_week,  # เก็บวันในสัปดาห์ (1-7)
+                        'Day_Month_Year': travel_date,  # เก็บวันที่จริง
                         'Scheduled_departure_time_origin': departure_datetime,
                         'Scheduled_arrival_time_destination': arrival_datetime,
                         'Railway_line': railway_line,
@@ -428,6 +443,7 @@ def main():
 
                     prediction = predict_single_input(model, label_encoders, input_data, model.feature_names_in_)
                     st.success(f"🕒 ผลการทำนาย: รถไฟจะล่าช้าประมาณ {prediction:.2f} นาที")
+
 
             except Exception as e:
                 st.error(f"❌ เกิดข้อผิดพลาดในการทำนาย: {e}")
