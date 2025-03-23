@@ -259,11 +259,18 @@ def main():
                     max_speed_display = st.selectbox("ความเร็วสูงสุดต่อชั่วโมง", list(max_speed_dict.keys()))
                     max_speed = max_speed_dict[max_speed_display]
 
+
                     # จำนวนทางแยก
-                    num_junctions = st.number_input(
-                        "จำนวนทางแยก",
-                        min_value=0, max_value=5, value=0
-                    )
+                    num_junctions = {
+                        "0": 0,
+                        "1": 1,
+                        "2": 2,
+                        "3": 3,
+                        "4": 4,
+                        "5": 5,
+                    }
+                    num_junction_display = st.selectbox("จำนวนทางแยก", list(num_junctions.keys()))
+                    num_junction = num_junctions[num_junction_display]
 
                     # ขาเดินทาง
                     outbound_return_dict = {
@@ -406,7 +413,7 @@ def main():
                     input_data = {
                         'Train_type': train_type,
                         'Maximum_train_speed': max_speed,
-                        'Number_of_junctions': num_junctions,
+                        'Number_of_junctions': num_junction,
                         'Outbound_trips_Return_trips': outbound_return,
                         'Train_number': train_number,
                         'Date': day_of_week,
