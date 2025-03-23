@@ -335,17 +335,17 @@ def main():
                     train_number = train_number_dict[train_number_display]
 
                     # วันไหนในสัปดาห์ฺ
-                    day_of_weeks = {
-                        "จันทร์": 1,
-                        "อังคาร": 2,
-                        "พุธ": 3,
-                        "พฤหัสบดี": 4,
-                        "ศุกร์": 5,
-                        "เสาร์": 6,
-                        "อาทิตย์": 7,
-                    }
-                    day_of_week_display = st.selectbox("วันไหนในสัปดาห์", list(day_of_weeks.keys()))
-                    day_of_week = day_of_weeks[day_of_week_display]
+                    # day_of_weeks = {
+                    #     "จันทร์": 1,
+                    #     "อังคาร": 2,
+                    #     "พุธ": 3,
+                    #     "พฤหัสบดี": 4,
+                    #     "ศุกร์": 5,
+                    #     "เสาร์": 6,
+                    #     "อาทิตย์": 7,
+                    # }
+                    # day_of_week_display = st.selectbox("วันไหนในสัปดาห์", list(day_of_weeks.keys()))
+                    # day_of_week = day_of_weeks[day_of_week_display]
 
 
                 # Column ขวา
@@ -416,7 +416,7 @@ def main():
                         'Number_of_junctions': num_junction,
                         'Outbound_trips_Return_trips': outbound_return,
                         'Train_number': train_number,
-                        'Date': day_of_week,
+                        # 'Date': day_of_week,
                         'Day_Month_Year': travel_date,
                         'Scheduled_departure_time_origin': departure_datetime,
                         'Scheduled_arrival_time_destination': arrival_datetime,
