@@ -16,7 +16,7 @@ options.add_argument("--window-size=1920,1080")
 service = Service(ChromeDriverManager().install())
 driver = webdriver.Chrome(service=service, options=options)
 
-url = "https://ttsview.railway.co.th/v3/search/?qType=21&qParam=3wGd4NOhq8ajnu7lGrVxzjw1e4Y7s9AARrFI&auth=befbbf5fc2c6d1c97256e07b130a942f4d1c18c3b96699ec8f91566982c25f311742750424"
+url = "https://ttsview.railway.co.th/v3/search/?qType=21&qParam=2h7c1cRso2XVxM7wW2zXYqZkDyD1eEL4DKXC&auth=cf1230aa3218ad6acd6e3c5a58d5a7953aaf303266a443bba5e259fabb5d93ff1742757965"
 driver.get(url)
 
 print("รอให้หน้าเว็บโหลด...")
@@ -28,7 +28,7 @@ try:
     driver.execute_script("showPassStation(16);")
     print("✅ กดปุ่มแสดงข้อมูลเพิ่มเติม สำเร็จ!")
     print("รอให้ข้อมูลโหลด...")
-    # time.sleep(1)  # เพิ่มเวลารอเป็น 1 วินาที
+    # time.sleep(5)  # เพิ่มเวลารอเป็น 1 วินาที
 
     train_name = "ไม่พบชื่อรถไฟ"
     try:
