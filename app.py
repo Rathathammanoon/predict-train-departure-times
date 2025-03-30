@@ -357,6 +357,11 @@ def main():
                     day_of_week_display = st.selectbox("วันไหนในสัปดาห์", list(day_of_weeks.keys()))
                     day_of_week = day_of_weeks[day_of_week_display]
 
+                    departure_delay = st.number_input("ความล่าช้าจากต้นทาง", min_value=0, max_value=2000, step=1)
+
+                    actual_departure_time = st.time_input("เวลาจริงที่ต้นทางออกตัว")
+
+                    actual_arrival_time = st.time_input("เวลาจริงที่ถึงปลายทาง")
 
                 # Column ขวา
                 with col2:
@@ -368,7 +373,6 @@ def main():
                     # เวลาออกเดินทางตามกำหนด
                     departure_time = st.time_input(
                         "เวลาออกเดินทางตามกำหนด",
-
                     )
 
                     if "arrival_time" not in st.session_state:
@@ -416,6 +420,12 @@ def main():
                     time_period_display = st.selectbox("ช่วงเวลา", list(time_periods.keys()))
                     time_period = time_periods[time_period_display]
 
+                    max_delay = st.number_input("ความล่าช้าสูงสุด", min_value=0, max_value=5000, step=1)
+
+                    total_delay = st.number_input("รวมเวลาทั้งหมดที่ล่าช้า", min_value=0, max_value=15000, step=1)
+
+                    stations_delay = st.number_input("จำนวนสถานีทั้งหมดที่ล่าช้า", min_value=0, max_value=93, step=1)
+
                 if st.button("ทำนายการล่าช้า"):
                     departure_datetime = datetime.combine(travel_date, departure_time)
                     arrival_datetime = datetime.combine(travel_date, arrival_time)
@@ -438,7 +448,13 @@ def main():
                         'Railway_line': railway_line,
                         'Distance': distance,
                         'Number_of_stations': num_stations,
-                        'Time_period': time_period
+                        'Time_period': time_period,
+                        'Departure_delay_origin': departure_delay,
+                        'Actual_departure_time_origin': actual_departure_time,
+                        'Actual_arrival_time_destination': actual_arrival_time,
+                        'Maximum_delay': max_delay,
+                        'Total_delay_time': total_delay,
+                        'Number_of_delayed_stations': stations_delay,
                     }
 
                     prediction = predict_single_input(model, label_encoders, input_data, model.feature_names_in_)
