@@ -1,90 +1,145 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.action_chains import ActionChains
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
+import pandas as pd
 import time
+from datetime import datetime
+import re
 
-# ตั้งค่า ChromeDriver
 options = webdriver.ChromeOptions()
-options.add_argument("--headless")  # รันแบบไม่เปิดหน้าต่าง
+options.add_argument("--headless")
 options.add_argument("--no-sandbox")
 options.add_argument("--disable-dev-shm-usage")
+options.add_argument("--window-size=1920,1080")
 
-# เปิดเบราว์เซอร์
 service = Service(ChromeDriverManager().install())
 driver = webdriver.Chrome(service=service, options=options)
 
-# เปิดเว็บ
 url = "https://ttsview.railway.co.th/v3/search/?qType=21&qParam=3wGd4NOhq8ajnu7lGrVxzjw1e4Y7s9AARrFI&auth=befbbf5fc2c6d1c97256e07b130a942f4d1c18c3b96699ec8f91566982c25f311742750424"
 driver.get(url)
 
-# รอให้หน้าเว็บโหลด
-time.sleep(5)
+print("รอให้หน้าเว็บโหลด...")
+time.sleep(1)  # เพิ่มเวลารอเป็น 1 วินาที
+
+train_data = []
 
 try:
-    # วิธีที่ 1: เรียกฟังก์ชัน JavaScript โดยตรง
     driver.execute_script("showPassStation(16);")
-    time.sleep(2)  # รอให้ข้อมูลโหลด
-    print("✅ เรียกฟังก์ชัน showPassStation(16) สำเร็จ!")
-except Exception as e:
-    print(f"❌ ไม่สามารถเรียกฟังก์ชันได้: {e}")
+    print("✅ กดปุ่มแสดงข้อมูลเพิ่มเติม สำเร็จ!")
+    print("รอให้ข้อมูลโหลด...")
+    # time.sleep(1)  # เพิ่มเวลารอเป็น 1 วินาที
 
-    # ถ้าวิธีที่ 1 ไม่สำเร็จ ให้ลองวิธีที่ 2
+    train_name = "ไม่พบชื่อรถไฟ"
     try:
-        print("กำลังลองวิธีที่ 2...")
-        # ใช้ JavaScript เพื่อกำจัดอีเลเมนต์ที่บังและคลิกที่ปุ่ม
-        driver.execute_script("""
-            // หาอีเลเมนต์ที่บังอยู่และทำให้มองไม่เห็นชั่วคราว
-            var overlays = document.getElementsByClassName('ant-card-body');
-            for (var i = 0; i < overlays.length; i++) {
-                overlays[i].style.pointerEvents = 'none';
-            }
-
-            // คลิกที่ปุ่มโดยตรง
-            document.getElementById('hideShowWord').click();
-        """)
-        time.sleep(2)
-        print("✅ คลิกปุ่มด้วย JavaScript สำเร็จ!")
+        train_name_element = driver.find_element(By.CLASS_NAME, "trainLink")
+        train_name = train_name_element.text
+        print(f"ชื่อรถไฟ (วิธีที่ 1): {train_name}")
     except Exception as e:
-        print(f"❌ วิธีที่ 2 ไม่สำเร็จ: {e}")
+        print(f"ไม่สามารถดึงชื่อรถไฟด้วยวิธีที่ 1")
 
-        # ถ้าวิธีที่ 2 ไม่สำเร็จ ให้ลองวิธีที่ 3
         try:
-            print("กำลังลองวิธีที่ 3...")
-            # ใช้ Actions และการกด Tab เพื่อนำทางไปยังปุ่ม
-            actions = ActionChains(driver)
-            actions.send_keys(Keys.TAB * 10)  # กด Tab หลายครั้งเพื่อนำทางไปยังปุ่ม
-            actions.send_keys(Keys.ENTER)  # กด Enter เพื่อเลือก
-            actions.perform()
-            time.sleep(2)
-            print("✅ นำทางด้วยแป้นพิมพ์และกด Enter สำเร็จ!")
+            train_name_element = driver.find_element(By.XPATH, "//div[contains(@class, 'train-name')]")
+            train_name = train_name_element.text
+            print(f"ชื่อรถไฟ (วิธีที่ 2): {train_name}")
         except Exception as e:
-            print(f"❌ วิธีที่ 3 ไม่สำเร็จ: {e}")
+            print(f"ไม่สามารถดึงชื่อรถไฟด้วยวิธีที่ 2")
 
-# ถ่ายภาพหน้าจอเพื่อตรวจสอบว่ามีการเปลี่ยนแปลงหรือไม่
-driver.save_screenshot("after_click.png")
+    print("\nค้นหาข้อมูลเวลา:")
+    real_time_elements = driver.find_elements(By.CLASS_NAME, "realTime")
+    print(f"พบข้อมูลเวลาจริง: {len(real_time_elements)}")
 
-# หา element ที่มีข้อมูลที่ต้องการ
-try:
-    # รอให้ elements ปรากฏหลังจากคลิกปุ่ม
-    WebDriverWait(driver, 10).until(
-        EC.presence_of_all_elements_located((By.CLASS_NAME, "realTime"))
-    )
+    train_date = datetime.now().strftime("%d/%m/%Y")  # ใช้วันที่ปัจจุบันเป็นค่าเริ่มต้น
+    try:
+        date_element = driver.find_element(By.XPATH, "//div[contains(@class, 'date')]")
+        train_date = date_element.text
+    except:
+        print("ไม่พบข้อมูลวันที่")
 
-    elements = driver.find_elements(By.CLASS_NAME, "realTime")
+    # ดึงข้อมูลทั้งหมดจาก row ของตาราง
+    station_rows = driver.find_elements(By.XPATH, "//div[contains(@class, 'station-row')]")
+    if not station_rows:
+        station_rows = driver.find_elements(By.XPATH, "//tr[contains(@class, 'station')]")
 
-    # แสดงข้อมูลที่ดึงมา
-    if elements:
-        for index, element in enumerate(elements, start=1):
-            print(f"ข้อมูล {index}: {element.text}")
+    if len(station_rows) > 0:
+        print(f"พบข้อมูลแถวสถานีทั้งหมด {len(station_rows)} รายการ")
+
+        for row in station_rows:
+            try:
+                station = row.find_element(By.XPATH, ".//*[contains(@class, 'station-name')]").text
+            except:
+                try:
+                    station = row.find_element(By.XPATH, ".//td[1]").text
+                except:
+                    station = "ไม่พบชื่อสถานี"
+
+            try:
+                scheduled_time = row.find_element(By.XPATH, ".//*[contains(@class, 'scheduledTime')]").text
+            except:
+                try:
+                    scheduled_time = row.find_element(By.XPATH, ".//td[2]").text
+                except:
+                    scheduled_time = "-"
+
+            try:
+                real_time_elem = row.find_element(By.XPATH, ".//*[contains(@class, 'realTime')]")
+                real_time = real_time_elem.text
+            except:
+                try:
+                    real_time = row.find_element(By.XPATH, ".//td[3]").text
+                except:
+                    real_time = "-"
+
+            time_diff = ""
+            try:
+                if real_time != "-":
+                    match = re.search(r'([+-]\d+)', real_time)
+                    if match:
+                        time_diff = match.group(1)
+            except:
+                time_diff = ""
+
+            train_data.append({
+                'รถไฟ': train_name,
+                'วันที่': train_date,
+                'สถานี': station,
+                'เวลาตามตาราง': scheduled_time,
+                'เวลาจริง': real_time,
+                'ความแตกต่าง (นาที)': time_diff
+            })
     else:
-        print("ไม่พบข้อมูลที่มี class 'realTime'")
-except Exception as e:
-    print(f"❌ เกิดข้อผิดพลาดในการดึงข้อมูล: {e}")
+        # ถ้าไม่พบแถวสถานี ให้พยายามแยกดึงข้อมูลจากกลุ่มเวลาจริงที่พบ
+        if real_time_elements:
+            print(f"ไม่พบแถวสถานี แต่พบข้อมูลเวลาจริง {len(real_time_elements)} รายการ")
+            for i, real_time_elem in enumerate(real_time_elements):
+                train_data.append({
+                    'รถไฟ': train_name,
+                    'วันที่': train_date,
+                    'สถานี': f"สถานีที่ {i + 1}",
+                    'เวลาตามตาราง': "-",
+                    'เวลาจริง': real_time_elem.text,
+                    'ความแตกต่าง (นาที)': ""
+                })
+        else:
+            print("ไม่พบข้อมูลสถานีหรือเวลาเลย")
 
-# ปิดเบราว์เซอร์
+    if train_data:
+        df = pd.DataFrame(train_data)
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        excel_filename = f"train_data_{timestamp}.xlsx"
+
+        df.to_excel(excel_filename, index=False)
+        print(f"✅ บันทึกข้อมูลลงไฟล์ {excel_filename} เรียบร้อยแล้ว")
+    else:
+        print("❌ ไม่มีข้อมูลสำหรับบันทึกลง Excel")
+
+except Exception as e:
+    print(f"❌ เกิดข้อผิดพลาด: {e}")
+
 driver.quit()
+
+if train_data:
+    print(f"\nดึงข้อมูลได้ทั้งหมด {len(train_data)} รายการ")
+else:
+    print("\nไม่มีข้อมูลที่ดึงได้")
