@@ -12,30 +12,20 @@ def render_train_input_form():
         train_number = render_train_number_input()
         day_of_week = render_day_of_week_input()
         departure_delay = st.number_input("ความล่าช้าจากต้นทาง", min_value=0, max_value=2000, step=1)
-
-        # Custom time inputs with hour and minute selection
-        actual_departure_hour, actual_departure_minute = render_time_selector("เวลาจริงที่ต้นทางออกตัว")
-        actual_arrival_hour, actual_arrival_minute = render_time_selector("เวลาจริงที่ถึงปลายทาง")
+        actual_departure_time = st.time_input("เวลาจริงที่ต้นทางออกตัว")
+        actual_arrival_time = st.time_input("เวลาจริงที่ถึงปลายทาง")
 
     with col2:
-        # Custom time input for departure time
-        departure_hour, departure_minute = render_time_selector("เวลาออกเดินทางตามกำหนด")
+        departure_time = st.time_input("เวลาออกเดินทางตามกำหนด")
 
-        # Handle arrival time with session state
-        if "arrival_hour" not in st.session_state:
-            current_time = datetime.now() + timedelta(minutes=30)
-            st.session_state.arrival_hour = current_time.hour
-            st.session_state.arrival_minute = current_time.minute
+        if "arrival_time" not in st.session_state:
+            st.session_state.arrival_time = (datetime.now() + timedelta(minutes=30)).time()
 
-        arrival_hour, arrival_minute = render_time_selector(
+        arrival_time = st.time_input(
             "เวลาถึงจุดหมายตามกำหนด",
-            default_hour=st.session_state.arrival_hour,
-            default_minute=st.session_state.arrival_minute,
-            key_prefix="arrival"
+            value=st.session_state.arrival_time,
+            key="arrival_time"
         )
-        # Update session state
-        st.session_state.arrival_hour = arrival_hour
-        st.session_state.arrival_minute = arrival_minute
 
         railway_line = render_railway_line_input()
         distance = st.number_input("ระยะทาง (กม.)", min_value=31, max_value=1152, value=31)
@@ -55,14 +45,14 @@ def render_train_input_form():
         'Train_number': train_number,
         'Date': day_of_week,  # This might need to be a full date
         'Departure_delay_origin': departure_delay,
-        'Actual_departure_time_origin_hour': actual_departure_hour,
-        'Actual_departure_time_origin_minute': actual_departure_minute,
-        'Actual_arrival_time_destination_hour': actual_arrival_hour,
-        'Actual_arrival_time_destination_minute': actual_arrival_minute,
-        'Scheduled_departure_time_origin_hour': departure_hour,
-        'Scheduled_departure_time_origin_minute': departure_minute,
-        'Scheduled_arrival_time_destination_hour': arrival_hour,
-        'Scheduled_arrival_time_destination_minute': arrival_minute,
+        'Actual_departure_time_origin_hour': actual_departure_time.hour,
+        'Actual_departure_time_origin_minute': actual_departure_time.minute,
+        'Actual_arrival_time_destination_hour': actual_arrival_time.hour,
+        'Actual_arrival_time_destination_minute': actual_arrival_time.minute,
+        'Scheduled_departure_time_origin_hour': departure_time.hour,
+        'Scheduled_departure_time_origin_minute': departure_time.minute,
+        'Scheduled_arrival_time_destination_hour': arrival_time.hour,
+        'Scheduled_arrival_time_destination_minute': arrival_time.minute,
         'Railway_line': railway_line,
         'Distance': distance,
         'Number_of_stations': num_stations,
@@ -71,22 +61,6 @@ def render_train_input_form():
         'Total_delay_time': total_delay,
         'Number_of_delayed_stations': stations_delay
     }
-
-def render_time_selector(label, default_hour=0, default_minute=0, key_prefix=None):
-    """Custom time selector with separate hour and minute inputs"""
-    st.write(label)
-    col1, col2 = st.columns(2)
-
-    # Generate unique keys if key_prefix is provided
-    hour_key = f"{key_prefix}_hour" if key_prefix else None
-    minute_key = f"{key_prefix}_minute" if key_prefix else None
-
-    with col1:
-        hour = st.number_input("ชั่วโมง", min_value=0, max_value=23, value=default_hour, step=1, key=hour_key)
-    with col2:
-        minute = st.number_input("นาที", min_value=0, max_value=59, value=default_minute, step=1, key=minute_key)
-
-    return hour, minute
 
 def render_train_type_input():
     train_types_dict = {
